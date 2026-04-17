@@ -11,16 +11,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- STYLE ---
-st.markdown("""
-<style>
-.big-title {font-size:42px;font-weight:bold;color:#2E86C1;}
-.card {background:#f8f9fa;padding:18px;border-radius:12px;}
-.result-box {padding:30px;border-radius:15px;text-align:center;font-size:32px;font-weight:bold;}
-.small-text {color:gray;}
-</style>
-""", unsafe_allow_html=True)
-
 # --- LOAD MODEL ---
 @st.cache_resource
 def load_assets():
@@ -31,164 +21,138 @@ def load_assets():
 model, model_columns = load_assets()
 
 # --- TITLE ---
-st.markdown('<p class="big-title">🧵 Garment Productivity Predictor</p>', unsafe_allow_html=True)
-st.caption("Decision Tree Model • Decision Support Dashboard")
+st.title("🧵 Garment Productivity Predictor Dashboard")
+st.caption("Decision Tree Model • Smart Factory Decision Support System")
+
+# --- SIDEBAR (IMPORTANT DETAILS) ---
+st.sidebar.header("📌 Important Details")
+
+day = st.sidebar.selectbox("Day", ["Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"])
+quarter = st.sidebar.selectbox("Quarter", ["Quarter1", "Quarter2", "Quarter3", "Quarter4", "Quarter5"])
+dept = st.sidebar.selectbox("Department", ["Sewing", "Finishing"])
+team = st.sidebar.slider("Team Number", 1, 12, 1)
+
+st.sidebar.markdown("---")
+st.sidebar.info("These factors strongly influence productivity patterns.")
+
+# --- MAIN INPUT AREA (SUB DETAILS) ---
+st.subheader("⚙️ Operational Inputs")
+
+col1, col2 = st.columns(2)
 
 form_is_invalid = False
 
-# --- INPUT LAYOUT ---
-col1, col2, col3 = st.columns(3)
-
-# IMPORTANT DETAILS
 with col1:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("📅 Important Details")
-    day = st.selectbox("Day", ["Monday","Tuesday","Wednesday","Thursday","Saturday","Sunday"])
-    quarter = st.selectbox("Quarter", ["Quarter1","Quarter2","Quarter3","Quarter4","Quarter5"])
-    dept = st.selectbox("Department", ["Sewing","Finishing"])
-    team = st.slider("Team",1,12,1)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# RESOURCE DETAILS
-with col2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("⚙️ Resource Details")
-
-    wip = st.number_input("WIP",500)
+    st.markdown("### 🔧 Resource Allocation")
+    
+    wip = st.number_input("Work in Progress (WIP)", value=500)
     if wip > 23122:
-        st.error("Max: 23122"); form_is_invalid=True
+        st.error("Max: 23,122")
+        form_is_invalid = True
 
-    workers = st.number_input("Workers",30)
+    workers = st.number_input("Number of Workers", value=30)
     if workers > 90 or workers < 2:
-        st.error("Range: 2–90"); form_is_invalid=True
+        st.error("Range: 2–90")
+        form_is_invalid = True
 
-    style_change = st.selectbox("Style Change",["0","1","2"])
-
-    smv = st.number_input("SMV",22.0)
+    smv = st.number_input("SMV (Task Complexity)", value=22.0)
     if smv > 55 or smv < 2.9:
-        st.error("Range: 2.9–54.6"); form_is_invalid=True
+        st.error("Range: 2.9–54.6")
+        form_is_invalid = True
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# PERFORMANCE DETAILS
-with col3:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("💰 Performance Details")
-
-    incentive = st.number_input("Incentive",100)
+with col2:
+    st.markdown("### 💰 Incentives & Efficiency")
+    
+    incentive = st.number_input("Incentive Amount", value=100)
     if incentive > 3600:
-        st.error("Max: 3600"); form_is_invalid=True
+        st.error("Max: 3,600")
+        form_is_invalid = True
 
-    overtime = st.slider("Overtime",-2.0,2.0,0.0)
+    overtime = st.slider("Overtime (Scaled)", -2.0, 2.0, 0.0)
 
-    idle_time = st.number_input("Idle Time",0)
+    idle_time = st.number_input("Idle Time (Minutes)", value=0)
     if idle_time > 300:
-        st.error("Max: 300"); form_is_invalid=True
+        st.error("Max: 300")
+        form_is_invalid = True
 
-    idle_men = st.number_input("Idle Workers",0)
+    idle_men = st.number_input("Idle Workers", value=0)
     if idle_men > 45:
-        st.error("Max: 45"); form_is_invalid=True
+        st.error("Max: 45")
+        form_is_invalid = True
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    style_change = st.selectbox("Style Changes", ["0", "1", "2"])
 
-# --- PREDICTION ---
+# --- PREDICTION BUTTON ---
 st.divider()
+
 center = st.columns([1,2,1])[1]
 
 if form_is_invalid:
-    st.warning("Fix errors before prediction")
-    center.button("Predict", disabled=True)
+    st.warning("⚠️ Please fix input errors before prediction.")
+    center.button("Predict Productivity", disabled=True)
 else:
-    if center.button("🚀 Generate Prediction", use_container_width=True):
+    if center.button("🚀 Predict Productivity", use_container_width=True):
 
-        # INPUT DF
-        input_df = pd.DataFrame(0,index=[0],columns=model_columns)
+        # --- DATA PREPARATION ---
+        input_df = pd.DataFrame(0, index=[0], columns=model_columns)
 
-        input_df['team']=team
-        input_df['smv']=smv
-        input_df['wip']=wip
-        input_df['incentive']=incentive
-        input_df['idle_time']=idle_time
-        input_df['idle_men']=idle_men
-        input_df['no_of_workers']=workers
-        input_df['over_time_scaled']=overtime
+        input_df['team'] = team
+        input_df['smv'] = smv
+        input_df['wip'] = wip
+        input_df['incentive'] = incentive
+        input_df['idle_time'] = idle_time
+        input_df['idle_men'] = idle_men
+        input_df['no_of_workers'] = workers
+        input_df['over_time_scaled'] = overtime
 
-        def set_dummy(cat,val):
-            col=f"{cat}_{val}"
-            if col in model_columns:
-                input_df[col]=1
+        def set_dummy(category, value):
+            col_name = f"{category}_{value}"
+            if col_name in model_columns:
+                input_df[col_name] = 1
 
-        set_dummy('quarter',quarter)
-        set_dummy('department',dept.lower())
-        set_dummy('day',day)
-        set_dummy('no_of_style_change',style_change)
+        set_dummy('quarter', quarter)
+        set_dummy('department', dept.lower())
+        set_dummy('day', day)
+        set_dummy('no_of_style_change', style_change)
 
-        input_df=input_df[model_columns]
+        input_df = input_df[model_columns]
 
-        # PREDICT
-        pred=model.predict(input_df)[0]
-        probs=model.predict_proba(input_df)[0]
+        # --- PREDICTION ---
+        prediction = model.predict(input_df)[0]
+        probs = model.predict_proba(input_df)[0]
 
-        labels=['Low','Moderate','High']
-        result=labels[pred]
+        labels = ['Low', 'Moderate', 'High']
+        result = labels[prediction]
 
+        # --- RESULT SECTION ---
         st.divider()
+        st.subheader("📊 Prediction Result")
 
-        # --- RESULT DISPLAY ---
-        if result=="High":
-            st.markdown('<div class="result-box" style="background:#d4edda;color:#155724;">✅ HIGH PRODUCTIVITY</div>',unsafe_allow_html=True)
-            desc="Factory is operating at optimal efficiency."
-            idx=2
+        if result == "High":
+            st.markdown("## 🟢 HIGH PRODUCTIVITY")
+            st.success("The production line is operating efficiently with optimal resource usage.")
+            confidence = probs[2]
             st.balloons()
 
-        elif result=="Moderate":
-            st.markdown('<div class="result-box" style="background:#fff3cd;color:#856404;">⚠️ MODERATE PRODUCTIVITY</div>',unsafe_allow_html=True)
-            desc="Performance is stable but improvement is possible."
-            idx=1
+        elif result == "Moderate":
+            st.markdown("## 🟡 MODERATE PRODUCTIVITY")
+            st.warning("Performance is stable, but there is room for improvement.")
+            confidence = probs[1]
 
         else:
-            st.markdown('<div class="result-box" style="background:#f8d7da;color:#721c24;">❌ LOW PRODUCTIVITY</div>',unsafe_allow_html=True)
-            desc="High risk of underperformance detected."
-            idx=0
+            st.markdown("## 🔴 LOW PRODUCTIVITY")
+            st.error("High risk of underperformance. Immediate action may be required.")
+            confidence = probs[0]
 
-        st.metric("Confidence", f"{probs[idx]:.2%}")
-        st.write(desc)
+        # --- CONFIDENCE ---
+        st.metric("Prediction Confidence", f"{confidence:.2%}")
 
-        # =========================
-        # 📈 PROBABILITY CHART
-        # =========================
-        st.subheader("📈 Prediction Probability")
+        # --- VISUALIZATION ---
+        st.subheader("📈 Prediction Probability Distribution")
+
         fig, ax = plt.subplots()
         ax.bar(labels, probs)
         ax.set_ylabel("Probability")
-        ax.set_title("Class Probability Distribution")
+        ax.set_title("Model Confidence Across Classes")
+
         st.pyplot(fig)
-
-        # =========================
-        # 📊 FEATURE IMPORTANCE
-        # =========================
-        st.subheader("📊 Key Factors Influencing Prediction")
-
-        importances = model.feature_importances_
-        feat_imp = pd.DataFrame({
-            "Feature": model_columns,
-            "Importance": importances
-        }).sort_values(by="Importance", ascending=False).head(10)
-
-        fig2, ax2 = plt.subplots()
-        ax2.barh(feat_imp["Feature"], feat_imp["Importance"])
-        ax2.invert_yaxis()
-        ax2.set_title("Top 10 Important Features")
-        st.pyplot(fig2)
-
-        # =========================
-        # 🧠 BUSINESS INSIGHT
-        # =========================
-        st.subheader("🧠 Smart Insight")
-
-        if result == "High":
-            st.success("Maintain current workforce and incentive strategy. Focus on consistency.")
-        elif result == "Moderate":
-            st.warning("Consider adjusting incentive or reducing idle time to boost performance.")
-        else:
-            st.error("Re-evaluate worker allocation, reduce idle time, and improve workflow efficiency.")
