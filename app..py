@@ -95,7 +95,8 @@ with col4:
         st.error("⚠️ Max is 3,600")
         form_is_invalid = True
     
-    overtime = st.slider("Overtime (Scaled)", -2.0, 2.0, 0.0)
+    # ✅ CHANGED RANGE HERE
+    overtime = st.slider("Overtime", 0, 25920, 0)
     
     idle_time = st.number_input("Idle Time (Minutes)", value=0)
     if idle_time > 300:
@@ -107,7 +108,6 @@ with col4:
         st.error("⚠️ Max is 45")
         form_is_invalid = True
 
-
 # =========================
 # PREDICTION SECTION
 # =========================
@@ -117,6 +117,7 @@ st.markdown("## 🚀 Prediction Result")
 if form_is_invalid:
     st.warning("⚠️ Please correct the highlighted errors before prediction.")
     st.button("Generate Productivity Forecast", disabled=True)
+
 else:
     if st.button("🔍 Generate Productivity Forecast", use_container_width=True):
 
@@ -124,20 +125,44 @@ else:
         input_df = pd.DataFrame(0, index=[0], columns=model_columns)
 
         # Numerical features
-        input_df['team'] = team
-        input_df['smv'] = smv
-        input_df['wip'] = wip
-        input_df['incentive'] = incentive
-        input_df['idle_time'] = idle_time
-        input_df['idle_men'] = idle_men
-        input_df['no_of_workers'] = workers
-        input_df['over_time_scaled'] = overtime
+        if 'team' in input_df.columns:
+            input_df['team'] = team
+
+        if 'smv' in input_df.columns:
+            input_df['smv'] = smv
+
+        if 'wip' in input_df.columns:
+            input_df['wip'] = wip
+
+        if 'incentive' in input_df.columns:
+            input_df['incentive'] = incentive
+
+        if 'idle_time' in input_df.columns:
+            input_df['idle_time'] = idle_time
+
+        if 'idle_men' in input_df.columns:
+            input_df['idle_men'] = idle_men
+
+        if 'no_of_workers' in input_df.columns:
+            input_df['no_of_workers'] = workers
+
+        # handle both naming possibilities
+        if 'over_time_scaled' in input_df.columns:
+            input_df['over_time_scaled'] = overtime
+        elif 'over_time' in input_df.columns:
+            input_df['over_time'] = overtime
 
         # --- ENCODING ---
         def set_dummy(category, value):
-            col_name = f"{category}_{value}"
-            if col_name in model_columns:
-                input_df[col_name] = 1
+            options = [
+                f"{category}_{value}",
+                f"{category}_{str(value).lower()}",
+                f"{category}_{str(value).upper()}"
+            ]
+            for col in options:
+                if col in model_columns:
+                    input_df[col] = 1
+                    break
 
         set_dummy('quarter', quarter)
         set_dummy('department', dept.lower())
@@ -149,14 +174,11 @@ else:
         # --- PREDICTION ---
         raw_pred = model.predict(input_df)[0]
 
-        # ✅ FORCE OUTPUT LABELS (KEY FIX)
-        if isinstance(raw_pred, str):
-            result = raw_pred
-        else:
-            label_map = {0: "Low", 1: "Moderate", 2: "High"}
-            result = label_map.get(int(raw_pred), "Unknown")
+        # ✅ FORCE OUTPUT LABELS
+        label_map = {0: 'Low', 1: 'Moderate', 2: 'High'}
+        result = label_map.get(int(raw_pred), str(raw_pred))
 
-        # ✅ SAFE PROBABILITY HANDLING
+        # probability (safe)
         probs = None
         if hasattr(model, "predict_proba"):
             try:
@@ -177,9 +199,8 @@ else:
             elif result == 'Moderate':
                 st.warning(f"Confidence: {confidence:.2%} — Stable but can be improved.")
 
-            elif result == 'Low':
+            else:
                 st.error(f"Confidence: {confidence:.2%} — Risk of low productivity.")
-
         else:
             st.info("Prediction generated successfully.")
 
