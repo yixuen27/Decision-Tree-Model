@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import os
 
 # --- CONFIGURATION ---
 st.set_page_config(
@@ -12,34 +11,13 @@ st.set_page_config(
 )
 
 # --- LOAD MODEL ---
-BASE_DIR = os.path.dirname(__file__)
-
 @st.cache_resource
 def load_assets():
-    model = joblib.load(os.path.join(BASE_DIR, 'garment_dt_model.pkl'))
-    model_columns = joblib.load(os.path.join(BASE_DIR, 'garment_dt_columns.pkl'))
+    model = joblib.load('garment_dt_model.pkl')
+    model_columns = joblib.load('garment_dt_columns.pkl')
     return model, model_columns
 
 model, model_columns = load_assets()
-
-# --- HELPER FUNCTIONS (from friend, adapted) ---
-def set_dummy_safe(input_df, prefix, value):
-    candidates = [
-        f"{prefix}_{value}",
-        f"{prefix}_{str(value).lower()}",
-        f"{prefix}_{str(value).upper()}",
-        f"{prefix}_{str(value).capitalize()}",
-    ]
-    for col in candidates:
-        if col in input_df.columns:
-            input_df[col] = 1
-            return
-
-def normalize_prediction(pred):
-    if isinstance(pred, str):
-        return pred
-    mapping = {0: "Low", 1: "Moderate", 2: "High"}
-    return mapping.get(int(pred), str(pred))
 
 # --- HEADER ---
 st.title("🧵 Garment Factory Productivity Predictor")
@@ -66,12 +44,17 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("👥 Workforce & Workload")
     
+    team = st.slider("Team Number", 1, 12, 1)
+    
     workers = st.number_input("Number of Workers", value=30)
     if workers > 90 or workers < 2:
         st.error("⚠️ Must be between 2 and 90")
         form_is_invalid = True
     
     wip = st.number_input("Work in Progress (WIP)", value=500)
+    if wip > 23122:
+        st.error("⚠️ Max allowed is 23,122")
+        form_is_invalid = True
 
 with col2:
     st.subheader("⚙️ Production Complexity")
@@ -124,6 +107,7 @@ with col4:
         st.error("⚠️ Max is 45")
         form_is_invalid = True
 
+
 # =========================
 # PREDICTION SECTION
 # =========================
@@ -133,44 +117,46 @@ st.markdown("## 🚀 Prediction Result")
 if form_is_invalid:
     st.warning("⚠️ Please correct the highlighted errors before prediction.")
     st.button("Generate Productivity Forecast", disabled=True)
-
 else:
     if st.button("🔍 Generate Productivity Forecast", use_container_width=True):
-
-        # --- PREPROCESSING ---
-        
-        # Round workers
-        workers = int(round(workers))
-        
-        # Handle WIP outlier
-        if wip > 23122:
-            wip = 0
 
         # --- CREATE INPUT DATA ---
         input_df = pd.DataFrame(0, index=[0], columns=model_columns)
 
-        # Numerical features (team removed)
-        if 'smv' in input_df.columns: input_df['smv'] = smv
-        if 'wip' in input_df.columns: input_df['wip'] = wip
-        if 'incentive' in input_df.columns: input_df['incentive'] = incentive
-        if 'idle_time' in input_df.columns: input_df['idle_time'] = idle_time
-        if 'idle_men' in input_df.columns: input_df['idle_men'] = idle_men
-        if 'no_of_workers' in input_df.columns: input_df['no_of_workers'] = workers
-        if 'over_time_scaled' in input_df.columns: input_df['over_time_scaled'] = overtime
+        # Numerical features
+        input_df['team'] = team
+        input_df['smv'] = smv
+        input_df['wip'] = wip
+        input_df['incentive'] = incentive
+        input_df['idle_time'] = idle_time
+        input_df['idle_men'] = idle_men
+        input_df['no_of_workers'] = workers
+        input_df['over_time_scaled'] = overtime
 
         # --- ENCODING ---
-        set_dummy_safe(input_df, 'quarter', quarter)
-        set_dummy_safe(input_df, 'department', dept.lower())
-        set_dummy_safe(input_df, 'day', day)
-        set_dummy_safe(input_df, 'no_of_style_change', style_change)
+        def set_dummy(category, value):
+            col_name = f"{category}_{value}"
+            if col_name in model_columns:
+                input_df[col_name] = 1
+
+        set_dummy('quarter', quarter)
+        set_dummy('department', dept.lower())
+        set_dummy('day', day)
+        set_dummy('no_of_style_change', style_change)
 
         input_df = input_df[model_columns]
 
         # --- PREDICTION ---
         raw_pred = model.predict(input_df)[0]
-        result = normalize_prediction(raw_pred)
 
-        # Safe probability
+        # ✅ FORCE OUTPUT LABELS (KEY FIX)
+        if isinstance(raw_pred, str):
+            result = raw_pred
+        else:
+            label_map = {0: "Low", 1: "Moderate", 2: "High"}
+            result = label_map.get(int(raw_pred), "Unknown")
+
+        # ✅ SAFE PROBABILITY HANDLING
         probs = None
         if hasattr(model, "predict_proba"):
             try:
@@ -191,11 +177,12 @@ else:
             elif result == 'Moderate':
                 st.warning(f"Confidence: {confidence:.2%} — Stable but can be improved.")
 
-            else:
+            elif result == 'Low':
                 st.error(f"Confidence: {confidence:.2%} — Risk of low productivity.")
-        else:
-            st.info("Prediction generated (confidence unavailable).")
 
-        # --- INPUT SUMMARY ---
+        else:
+            st.info("Prediction generated successfully.")
+
+        # --- OPTIONAL: SHOW INPUT SUMMARY ---
         with st.expander("📋 View Input Summary"):
             st.dataframe(input_df)
