@@ -10,7 +10,7 @@ st.set_page_config(page_title="Garment Productivity Predictor (Decision Tree)", 
 @st.cache_resource
 def load_assets():
     model = joblib.load('garment_dt_model.pkl')   # <-- changed
-    model_columns = joblib.load('dt_model_columns.pkl')  # <-- changed
+    model_columns = joblib.load('garment_dt_columns.pkl')  # <-- changed
     return model, model_columns
 
 model, model_columns = load_assets()
