@@ -123,4 +123,4 @@ else:
         elif result == 'Moderate':
             st.warning(f"Confidence: {probs[1]:.2%}")
         else:
-            st.error(f"Confidence: {probs[0]:.2%}")               modified the design to make it more clear and interesting without changing the information, can separate in important details and sub details, provide the suitable and full codes for deployment and make sure can run in streamlit, make the results more clear,interesting, big and give little description
+            st.error(f"Confidence: {probs[0]:.2%}")              
