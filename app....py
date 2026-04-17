@@ -10,7 +10,7 @@ st.set_page_config(
     page_icon="🧵"
 )
 
-# --- LOAD ASSETS ---
+# --- LOAD MODEL ---
 @st.cache_resource
 def load_assets():
     model = joblib.load('garment_dt_model.pkl')
@@ -20,92 +20,112 @@ def load_assets():
 model, model_columns = load_assets()
 
 # --- HEADER ---
-st.title("🧵 Garment Productivity Predictor")
-st.markdown("### 📊 Decision Tree Model for Factory Performance Forecasting")
-st.info("This tool predicts whether production will be **Low, Moderate, or High** based on operational inputs.")
+st.title("🧵 Garment Factory Productivity Predictor")
+st.markdown("### 📊 Decision Tree Model Deployment")
 
-st.divider()
+st.info("""
+This system predicts **production productivity level** based on operational inputs.  
+✔ Model: Decision Tree Classifier  
+✔ Output: Low / Moderate / High Productivity
+""")
 
+# Track validation
 form_is_invalid = False
 
-# ==============================
-# 🔹 IMPORTANT INPUTS
-# ==============================
-st.markdown("## 🔑 Important Production Inputs")
+# --- MAIN INPUT SECTIONS ---
+st.divider()
+
+# =========================
+# SECTION 1: IMPORTANT DETAILS
+# =========================
+st.markdown("## 🔴 Important Production Factors")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("### 📅 Time & Department")
-    day = st.selectbox("Day of the Week", ["Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"])
-    quarter = st.selectbox("Quarter", ["Quarter1", "Quarter2", "Quarter3", "Quarter4", "Quarter5"])
-    dept = st.selectbox("Department", ["Sewing", "Finishing"])
-    team = st.slider("Team Number", 1, 12, 1)
-
-with col2:
-    st.markdown("### ⚙️ Workforce & Workload")
+    st.subheader("👥 Workforce & Workload")
     
-    wip = st.number_input("Work in Progress (wip)", value=500)
-    if wip > 23122:
-        st.error("⚠️ Max wip is 23,122")
-        form_is_invalid = True
-        
+    team = st.slider("Team Number", 1, 12, 1)
+    
     workers = st.number_input("Number of Workers", value=30)
     if workers > 90 or workers < 2:
-        st.error("⚠️ Range is 2 to 90")
+        st.error("⚠️ Must be between 2 and 90")
+        form_is_invalid = True
+    
+    wip = st.number_input("Work in Progress (WIP)", value=500)
+    if wip > 23122:
+        st.error("⚠️ Max allowed is 23,122")
         form_is_invalid = True
 
-    smv = st.number_input("SMV (Task Complexity)", value=22.0)
+with col2:
+    st.subheader("⚙️ Production Complexity")
+    
+    smv = st.number_input("SMV (Standard Minute Value)", value=22.0)
     if smv > 55 or smv < 2.9:
-        st.error("⚠️ Range is 2.9 to 54.6")
+        st.error("⚠️ Must be between 2.9 and 54.6")
         form_is_invalid = True
 
-st.divider()
+    style_change = st.selectbox("Number of Style Changes", ["0", "1", "2"])
 
-# ==============================
-# 🔹 SUPPORTING INPUTS
-# ==============================
-st.markdown("## ⚙️ Supporting Operational Details")
+
+# =========================
+# SECTION 2: SUPPORTING DETAILS
+# =========================
+st.divider()
+st.markdown("## 🟡 Supporting Operational Details")
 
 col3, col4 = st.columns(2)
 
 with col3:
-    style_change = st.selectbox("Number of Style Changes", ["0", "1", "2"])
-    overtime = st.slider("Overtime (Scaled)", -2.0, 2.0, 0.0)
+    st.subheader("📅 Time & Department")
+    
+    day = st.selectbox("Day of the Week",
+        ["Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"]
+    )
+    
+    quarter = st.selectbox("Production Quarter",
+        ["Quarter1", "Quarter2", "Quarter3", "Quarter4", "Quarter5"]
+    )
+    
+    dept = st.selectbox("Department", ["Sewing", "Finishing"])
 
 with col4:
+    st.subheader("💰 Incentives & Efficiency")
+    
     incentive = st.number_input("Incentive Amount", value=100)
     if incentive > 3600:
-        st.error("⚠️ Max Incentive is 3,600")
+        st.error("⚠️ Max is 3,600")
         form_is_invalid = True
-        
+    
+    overtime = st.slider("Overtime (Scaled)", -2.0, 2.0, 0.0)
+    
     idle_time = st.number_input("Idle Time (Minutes)", value=0)
     if idle_time > 300:
-        st.error("⚠️ Max idle time is 300")
+        st.error("⚠️ Max is 300")
         form_is_invalid = True
-        
-    idle_men = st.number_input("Idle Workers Count", value=0)
+    
+    idle_men = st.number_input("Idle Workers", value=0)
     if idle_men > 45:
-        st.error("⚠️ Max idle workers is 45")
+        st.error("⚠️ Max is 45")
         form_is_invalid = True
 
-st.divider()
 
-# ==============================
-# 🔹 PREDICTION
-# ==============================
+# =========================
+# PREDICTION SECTION
+# =========================
+st.divider()
 st.markdown("## 🚀 Prediction Result")
 
 if form_is_invalid:
-    st.warning("Please fix input errors before prediction.")
+    st.warning("⚠️ Please correct the highlighted errors before prediction.")
     st.button("Generate Productivity Forecast", disabled=True)
 else:
-    if st.button("🔮 Generate Productivity Forecast", use_container_width=True):
+    if st.button("🔍 Generate Productivity Forecast", use_container_width=True):
 
-        # Create dataframe
+        # --- CREATE INPUT DATA ---
         input_df = pd.DataFrame(0, index=[0], columns=model_columns)
 
-        # Numerical inputs
+        # Numerical features
         input_df['team'] = team
         input_df['smv'] = smv
         input_df['wip'] = wip
@@ -115,7 +135,7 @@ else:
         input_df['no_of_workers'] = workers
         input_df['over_time_scaled'] = overtime
 
-        # Encoding
+        # --- ENCODING ---
         def set_dummy(category, value):
             col_name = f"{category}_{value}"
             if col_name in model_columns:
@@ -128,38 +148,26 @@ else:
 
         input_df = input_df[model_columns]
 
-        # Prediction
+        # --- PREDICTION ---
         prediction = model.predict(input_df)[0]
         probs = model.predict_proba(input_df)[0]
 
         labels = ['Low', 'Moderate', 'High']
         result = labels[prediction]
 
-        # ==============================
-        # 🎯 RESULT DISPLAY (BIG + CLEAR)
-        # ==============================
-        st.markdown("---")
+        # --- DISPLAY RESULT ---
+        st.markdown(f"### 🏷️ Predicted Productivity Level: **{result}**")
 
         if result == 'High':
-            st.success("### 🟢 HIGH PRODUCTIVITY")
-            st.markdown(f"## ✅ Confidence: **{probs[2]:.2%}**")
+            st.success(f"Confidence: {probs[2]:.2%} — Excellent performance expected.")
             st.balloons()
-            st.markdown("Production is running at an **optimized level**. Resources are well utilized.")
 
         elif result == 'Moderate':
-            st.warning("### 🟡 MODERATE PRODUCTIVITY")
-            st.markdown(f"## ⚖️ Confidence: **{probs[1]:.2%}**")
-            st.markdown("Production is **stable but has room for improvement**.")
+            st.warning(f"Confidence: {probs[1]:.2%} — Stable but can be improved.")
 
         else:
-            st.error("### 🔴 LOW PRODUCTIVITY")
-            st.markdown(f"## ⚠️ Confidence: **{probs[0]:.2%}**")
-            st.markdown("There is a **risk of not meeting targets**. Consider adjusting workforce or workload.")
+            st.error(f"Confidence: {probs[0]:.2%} — Risk of low productivity.")
 
-        # Optional: Show probability breakdown
-        st.markdown("### 📊 Prediction Breakdown")
-        prob_df = pd.DataFrame({
-            "Category": labels,
-            "Probability": probs
-        })
-        st.bar_chart(prob_df.set_index("Category"))
+        # --- OPTIONAL: SHOW INPUT SUMMARY ---
+        with st.expander("📋 View Input Summary"):
+            st.dataframe(input_df)
