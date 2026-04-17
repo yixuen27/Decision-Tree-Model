@@ -2,10 +2,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import matplotlib.pyplot as plt
 
 # =========================================================
-# CONFIGURATION
+# PAGE CONFIGURATION
 # =========================================================
 st.set_page_config(
     page_title="Garment Productivity Predictor",
@@ -14,12 +13,12 @@ st.set_page_config(
 )
 
 # =========================================================
-# LOAD MODEL
+# LOAD MODEL & FEATURES
 # =========================================================
 @st.cache_resource
 def load_assets():
-    model = joblib.load('garment_dt_model.pkl')
-    model_columns = joblib.load('garment_dt_columns.pkl')
+    model = joblib.load("garment_dt_model.pkl")
+    model_columns = joblib.load("garment_dt_columns.pkl")
     return model, model_columns
 
 model, model_columns = load_assets()
@@ -27,75 +26,131 @@ model, model_columns = load_assets()
 # =========================================================
 # HEADER
 # =========================================================
-st.title("🧵 Garment Factory Productivity Predictor")
-st.markdown("### 📊 Decision Tree Decision Support System")
+st.title("🧵 AI-Powered Garment Factory Productivity Predictor")
+st.markdown("### 📊 Decision Tree Model Deployment System")
 
 st.info("""
-Predict factory productivity using operational inputs.  
+This intelligent system predicts **garment production productivity levels**  
+based on operational and workforce inputs.
+
 **Model:** Decision Tree Classifier  
-**Output:** Low / Moderate / High Productivity  
+**Output:** Low | Moderate | High Productivity
 """)
 
+# =========================================================
+# FORM VALIDATION FLAG
+# =========================================================
 form_is_invalid = False
+
 st.divider()
 
 # =========================================================
-# INPUT SECTION
+# SECTION 1: CORE PRODUCTION FACTORS
 # =========================================================
-st.markdown("## 🔧 Production Inputs")
+st.markdown("## 🔴 Core Production Factors")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("👥 Workforce")
+    st.subheader("👥 Workforce Details")
 
     team = st.slider("Team Number", 1, 12, 1)
-    workers = st.number_input("Number of Workers", value=30)
 
+    workers = st.number_input("Number of Workers", min_value=1, max_value=120, value=30)
     if not (2 <= workers <= 90):
-        st.error("Workers must be between 2 and 90")
+        st.error("⚠️ Workers must be between 2 and 90")
         form_is_invalid = True
 
-    wip = st.number_input("Work in Progress (WIP)", value=500)
+    wip = st.number_input("Work in Progress (WIP)", min_value=0, value=500)
+    if wip > 23122:
+        st.error("⚠️ Maximum WIP is 23,122")
+        form_is_invalid = True
 
 with col2:
-    st.subheader("⚙️ Operations")
+    st.subheader("⚙️ Production Complexity")
 
-    smv = st.number_input("SMV", value=22.0)
-    style_change = st.selectbox("Style Changes", ["0", "1", "2"])
+    smv = st.number_input("SMV (Standard Minute Value)", value=22.0)
+    if not (2.9 <= smv <= 54.6):
+        st.error("⚠️ SMV must be between 2.9 and 54.6")
+        form_is_invalid = True
 
-    incentive = st.number_input("Incentive", value=100)
-    overtime = st.slider("Overtime (Scaled)", -2.0, 2.0, 0.0)
-
-# =========================================================
-# FIXED INPUTS (Simplified for simulation)
-# =========================================================
-day = "Monday"
-quarter = "Quarter1"
-dept = "Sewing"
-idle_time = 0
-idle_men = 0
+    style_change = st.selectbox(
+        "Number of Style Changes",
+        ["0", "1", "2"]
+    )
 
 # =========================================================
-# PREDICTION FUNCTION
-# =========================================================
-def predict_productivity(input_df):
-    pred = model.predict(input_df)[0]
-    prob = model.predict_proba(input_df)[0]
-    return pred, prob
-
-# =========================================================
-# SINGLE PREDICTION
+# SECTION 2: OPERATIONAL FACTORS
 # =========================================================
 st.divider()
-st.markdown("## 🔍 Current Prediction")
+st.markdown("## 🟡 Operational & Time Factors")
 
-if not form_is_invalid:
-    if st.button("Generate Prediction", use_container_width=True):
+col3, col4 = st.columns(2)
 
+with col3:
+    st.subheader("📅 Production Scheduling")
+
+    day = st.selectbox(
+        "Day of the Week",
+        ["Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"]
+    )
+
+    quarter = st.selectbox(
+        "Production Quarter",
+        ["Quarter1", "Quarter2", "Quarter3", "Quarter4", "Quarter5"]
+    )
+
+    dept = st.selectbox(
+        "Department",
+        ["Sewing", "Finishing"]
+    )
+
+with col4:
+    st.subheader("💰 Efficiency & Time")
+
+    incentive = st.number_input("Incentive Amount", min_value=0, value=100)
+    if incentive > 3600:
+        st.error("⚠️ Maximum incentive is 3,600")
+        form_is_invalid = True
+
+    # ✅ UPDATED RANGE (0 → 25950)
+    over_time = st.slider(
+        "Over Time (Minutes)",
+        min_value=0,
+        max_value=25950,
+        value=0,
+        step=30
+    )
+
+    idle_time = st.number_input("Idle Time (Minutes)", min_value=0, value=0)
+    if idle_time > 300:
+        st.error("⚠️ Maximum idle time is 300 minutes")
+        form_is_invalid = True
+
+    idle_men = st.number_input("Idle Workers", min_value=0, value=0)
+    if idle_men > 45:
+        st.error("⚠️ Maximum idle workers is 45")
+        form_is_invalid = True
+
+# =========================================================
+# PREDICTION SECTION
+# =========================================================
+st.divider()
+st.markdown("## 🚀 Productivity Prediction")
+
+if form_is_invalid:
+    st.warning("⚠️ Please fix input errors before generating prediction.")
+    st.button("Generate Prediction", disabled=True)
+
+else:
+    if st.button("🔍 Generate Productivity Forecast", use_container_width=True):
+
+        # =====================================================
+        # PREPARE INPUT DATAFRAME
+        # =====================================================
         input_df = pd.DataFrame(0, index=[0], columns=model_columns)
 
-        # Numerical
+        # Numerical Features
         input_df['team'] = team
         input_df['smv'] = smv
         input_df['wip'] = wip
@@ -103,101 +158,53 @@ if not form_is_invalid:
         input_df['idle_time'] = idle_time
         input_df['idle_men'] = idle_men
         input_df['no_of_workers'] = workers
-        input_df['over_time_scaled'] = overtime
 
-        # Encoding
-        def set_dummy(cat, val):
-            col = f"{cat}_{val}"
-            if col in model_columns:
-                input_df[col] = 1
+        # IMPORTANT: If your model used scaled overtime, adjust here
+        input_df['over_time_scaled'] = over_time  # Modify if scaling was applied during training
 
+        # =====================================================
+        # ENCODING FUNCTION
+        # =====================================================
+        def set_dummy(prefix, value):
+            col_name = f"{prefix}_{value}"
+            if col_name in input_df.columns:
+                input_df[col_name] = 1
+
+        # Apply Encoding
         set_dummy('quarter', quarter)
         set_dummy('department', dept.lower())
         set_dummy('day', day)
         set_dummy('no_of_style_change', style_change)
 
+        # Align columns
         input_df = input_df[model_columns]
 
-        pred, prob = predict_productivity(input_df)
+        # =====================================================
+        # MODEL PREDICTION
+        # =====================================================
+        prediction = model.predict(input_df)[0]
+        probabilities = model.predict_proba(input_df)[0]
 
-        labels = ['Low', 'Moderate', 'High']
-        result = labels[pred]
+        labels = ["Low", "Moderate", "High"]
+        result = labels[prediction]
 
-        st.markdown(f"### 🎯 Result: **{result}**")
+        # =====================================================
+        # DISPLAY RESULTS
+        # =====================================================
+        st.markdown(f"### 🏷️ Predicted Productivity Level: **{result}**")
 
-        if result == "Low":
-            st.error(f"⚠️ High Risk (Confidence: {prob[0]:.2%})")
+        if result == "High":
+            st.success(f"Confidence: {probabilities[2]:.2%} — Excellent productivity expected.")
+            st.balloons()
+
         elif result == "Moderate":
-            st.warning(f"⚠️ متوسط (Confidence: {prob[1]:.2%})")
+            st.warning(f"Confidence: {probabilities[1]:.2%} — Stable performance with room for improvement.")
+
         else:
-            st.success(f"✅ Excellent (Confidence: {prob[2]:.2%})")
+            st.error(f"Confidence: {probabilities[0]:.2%} — High risk of low productivity.")
 
-# =========================================================
-# TIME RANGE ANALYSIS (0 → 25950)
-# =========================================================
-st.divider()
-st.markdown("## ⏱️ Productivity Trend Over Time (0 → 25,950)")
-
-if st.button("📈 Run Time Simulation", use_container_width=True):
-
-    time_range = np.linspace(0, 25950, 100)
-    results = []
-
-    for t in time_range:
-        temp_df = pd.DataFrame(0, index=[0], columns=model_columns)
-
-        # Simulate overtime trend based on time
-        overtime_sim = (t / 25950) * 2 - 1  # scale to [-1, 1]
-
-        temp_df['team'] = team
-        temp_df['smv'] = smv
-        temp_df['wip'] = wip
-        temp_df['incentive'] = incentive
-        temp_df['idle_time'] = idle_time
-        temp_df['idle_men'] = idle_men
-        temp_df['no_of_workers'] = workers
-        temp_df['over_time_scaled'] = overtime_sim
-
-        # Encoding
-        set_dummy('quarter', quarter)
-        set_dummy('department', dept.lower())
-        set_dummy('day', day)
-        set_dummy('no_of_style_change', style_change)
-
-        temp_df = temp_df[model_columns]
-
-        pred = model.predict(temp_df)[0]
-        results.append(pred)
-
-    # Convert to numeric labels
-    results = np.array(results)
-
-    # =========================================================
-    # PLOT
-    # =========================================================
-    fig, ax = plt.subplots()
-
-    ax.plot(time_range, results)
-    ax.set_title("Productivity Prediction Over Time")
-    ax.set_xlabel("Time Range (0 → 25950)")
-    ax.set_ylabel("Productivity Level")
-
-    # Highlight LOW regions
-    low_indices = np.where(results == 0)[0]
-    ax.scatter(time_range[low_indices], results[low_indices])
-
-    st.pyplot(fig)
-
-    # =========================================================
-    # LOW RESULT INSIGHT
-    # =========================================================
-    low_percentage = (results == 0).mean() * 100
-
-    st.markdown("### ⚠️ Low Productivity Analysis")
-
-    if low_percentage > 50:
-        st.error(f"🚨 Critical: {low_percentage:.2f}% of time shows LOW productivity")
-    elif low_percentage > 20:
-        st.warning(f"⚠️ Warning: {low_percentage:.2f}% LOW productivity detected")
-    else:
-        st.success(f"✅ Only {low_percentage:.2f}% LOW productivity (Healthy)")
+        # =====================================================
+        # INPUT SUMMARY
+        # =====================================================
+        with st.expander("📋 View Processed Input Data"):
+            st.dataframe(input_df)
