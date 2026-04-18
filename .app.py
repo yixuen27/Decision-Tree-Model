@@ -121,8 +121,6 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("👥 Workforce & Workload")
 
-    team = st.slider("Team Number", 1, 12, 1)
-
     no_of_workers = st.number_input("Number of Workers", value=30)
     if not (2 <= no_of_workers <= 89):
         st.error("Workers must be between 2 and 89")
