@@ -22,18 +22,25 @@ st.set_page_config(
 # =========================================================
 st.markdown("""
 <style>
+
+/* Layout */
 .block-container {
     padding-top: 1.2rem;
     padding-bottom: 2rem;
     max-width: 1200px;
 }
+
+/* Header */
 .hero-card {
     background: linear-gradient(135deg, #1e3a8a, #0f172a);
     color: white;
     padding: 1.8rem;
     border-radius: 20px;
     margin-bottom: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
+
+/* Sections */
 .section-card {
     background: rgba(255,255,255,0.9);
     border-radius: 18px;
@@ -41,12 +48,16 @@ st.markdown("""
     box-shadow: 0 6px 20px rgba(0,0,0,0.06);
     margin-bottom: 1rem;
 }
+
+/* Result */
 .result-card {
     border-radius: 20px;
     padding: 1.5rem;
     background: linear-gradient(135deg, #ffffff, #f1f5f9);
     box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
+
+/* Button */
 .stButton>button {
     border-radius: 12px;
     height: 3em;
@@ -54,6 +65,7 @@ st.markdown("""
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: white;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
