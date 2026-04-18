@@ -18,40 +18,75 @@ st.set_page_config(
 
 
 # =========================================================
-# 🎨 CUSTOM STYLING (FROM DESIGN 1)
+# 🎨 PROFESSIONAL UI STYLING
 # =========================================================
 st.markdown("""
 <style>
+
+/* Global */
 .block-container {
-    padding-top: 1.4rem;
+    padding-top: 1.2rem;
     padding-bottom: 2rem;
     max-width: 1200px;
 }
+
+/* Hero Header */
 .hero-card {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: linear-gradient(135deg, #1e3a8a, #0f172a);
     color: white;
-    padding: 1.4rem 1.6rem;
-    border-radius: 18px;
+    padding: 1.8rem;
+    border-radius: 20px;
     margin-bottom: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
+
+/* Section Cards */
 .section-card {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 1rem;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
-}
-.metric-card {
-    background: #f8fafc;
-    border-radius: 16px;
-    padding: 1rem;
-    text-align: center;
-}
-.result-card {
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
     border-radius: 18px;
     padding: 1.2rem;
-    background: #ffffff;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    margin-bottom: 1rem;
+    transition: 0.3s;
 }
+.section-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Result Card */
+.result-card {
+    border-radius: 20px;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #ffffff, #f1f5f9);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* Buttons */
+.stButton>button {
+    border-radius: 12px;
+    height: 3em;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    border: none;
+}
+.stButton>button:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+/* Badge */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 12px;
+    margin-right: 6px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -69,7 +104,7 @@ model, model_columns = load_assets()
 
 
 # =========================================================
-# 🧠 HELPER FUNCTIONS (FROM DESIGN 1)
+# 🧠 HELPER FUNCTIONS
 # =========================================================
 LABEL_MAP = {0: "Low", 1: "Moderate", 2: "High"}
 DISPLAY_ORDER = ["Low", "Moderate", "High"]
@@ -91,12 +126,17 @@ def productivity_note(label):
 
 
 # =========================================================
-# 🏠 HEADER (DESIGN 1)
+# 🏠 HEADER
 # =========================================================
 st.markdown("""
 <div class="hero-card">
 <h1>🧵 AI-Powered Garment Factory Productivity Predictor</h1>
 <p>Decision-support system using Decision Tree model</p>
+
+<span class="badge">Machine Learning</span>
+<span class="badge">Decision Support</span>
+<span class="badge">Real-time Prediction</span>
+
 </div>
 """, unsafe_allow_html=True)
 
@@ -107,13 +147,14 @@ c3.metric("Output", "3 Classes")
 
 
 # =========================================================
-# 🧾 INPUT SECTION (MERGED DESIGN 1 + 2)
+# 🧾 INPUT SECTION
 # =========================================================
 form_is_invalid = False
 
 st.divider()
 
-# 🔴 IMPORTANT DETAILS (Design 2 structure)
+# 🔴 IMPORTANT DETAILS
+st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("## 🔴 Important Production Factors")
 
 col1, col2 = st.columns(2)
@@ -141,9 +182,11 @@ with col2:
 
     no_of_style_change = st.selectbox("Style Changes", [0, 1, 2])
 
+st.markdown('</div>', unsafe_allow_html=True)
+
 
 # 🟡 SUPPORTING DETAILS
-st.divider()
+st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("## 🟡 Supporting Operational Details")
 
 col3, col4 = st.columns(2)
@@ -165,11 +208,11 @@ with col4:
     st.subheader("💰 Incentives & Efficiency")
 
     incentive = st.number_input("Incentive", value=100)
-
     over_time = st.slider("Over Time (Minutes)", 0, 25920, 0)
-
     idle_time = st.number_input("Idle Time", value=0)
     idle_men = st.number_input("Idle Workers", value=0)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =========================================================
@@ -187,11 +230,10 @@ if form_is_invalid:
 
 
 # =========================================================
-# 📊 OUTPUT (DESIGN 1 + 2 COMBINED)
+# 📊 OUTPUT
 # =========================================================
 if generate:
 
-    # Build input
     input_df = pd.DataFrame(0, index=[0], columns=model_columns)
 
     input_df['smv'] = smv
@@ -214,7 +256,6 @@ if generate:
 
     input_df = input_df[model_columns]
 
-    # Prediction
     prediction = model.predict(input_df)[0]
     probs = model.predict_proba(input_df)[0]
 
@@ -223,21 +264,21 @@ if generate:
 
     predicted_label = LABEL_MAP[prediction]
 
-    # 🎯 RESULT CARD
     st.markdown('<div class="result-card">', unsafe_allow_html=True)
 
-    st.markdown(f"### Predicted Productivity Level: **{predicted_label}**")
+    st.markdown(f"<h2 style='text-align:center;'>🎯 {predicted_label} Productivity</h2>",
+                unsafe_allow_html=True)
+
     st.write(productivity_note(predicted_label))
 
-    # 🎯 PROBABILITY BARS (Design 1)
     c1, c2, c3 = st.columns(3)
 
     for col, label in zip([c1, c2, c3], DISPLAY_ORDER):
         with col:
+            st.caption(f"{label} Confidence Level")
             st.metric(label, f"{prob_dict[label]:.2%}")
             st.progress(prob_dict[label])
 
-    # 🎯 FEEDBACK (Design 2 style)
     if predicted_label == "High":
         st.success(f"Confidence: {prob_dict['High']:.2%}")
         st.balloons()
@@ -248,7 +289,6 @@ if generate:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 📋 EXTRA DETAILS
     with st.expander("📋 View Processed Input Data"):
         st.dataframe(input_df)
 
@@ -256,3 +296,14 @@ if generate:
         st.write(
             "Decision Tree may give identical probabilities for similar patterns (same leaf node)."
         )
+
+
+# =========================================================
+# 📌 FOOTER
+# =========================================================
+st.markdown("""
+<hr>
+<p style='text-align:center; font-size:13px; color:gray;'>
+Built with Streamlit | AI Decision Support System for Garment Industry
+</p>
+""", unsafe_allow_html=True)
