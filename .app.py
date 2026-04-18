@@ -61,8 +61,8 @@ st.markdown("""
 # =========================================================
 @st.cache_resource
 def load_assets():
-    model = joblib.load("garment_dt_model (1).pkl")
-    model_columns = joblib.load("garment_dt_columns (1).pkl")
+    model = joblib.load("garment_dt_model.pkl")
+    model_columns = joblib.load("garment_dt_columns.pkl")
     return model, model_columns
 
 model, model_columns = load_assets()
