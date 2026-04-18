@@ -18,95 +18,43 @@ st.set_page_config(
 
 
 # =========================================================
-# 🎨 PROFESSIONAL UI STYLING
+# 🎨 UI STYLING
 # =========================================================
 st.markdown("""
 <style>
-
-/* Background */
 .stApp {
     background: linear-gradient(120deg, #f1f5f9, #e2e8f0);
 }
-
-/* Global */
 .block-container {
-    padding-top: 1.2rem;
-    padding-bottom: 2rem;
     max-width: 1200px;
 }
-
-/* Hero Header */
 .hero-card {
     background: linear-gradient(135deg, #1e3a8a, #0f172a);
     color: white;
     padding: 1.8rem;
     border-radius: 20px;
     margin-bottom: 1rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
-
-/* Section Cards */
 .section-card {
-    background: rgba(255,255,255,0.9);
-    backdrop-filter: blur(10px);
+    background: white;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+.result-card {
     border-radius: 18px;
     padding: 1.2rem;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-    margin-bottom: 1rem;
-    transition: 0.3s;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
 }
-.section-card:hover {
-    transform: translateY(-3px);
-}
-
-/* Result Card */
-.result-card {
-    border-radius: 20px;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #ffffff, #f1f5f9);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-}
-
-/* Buttons */
 .stButton>button {
     border-radius: 12px;
     height: 3em;
-    font-size: 16px;
     font-weight: 600;
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: white;
-    border: none;
 }
-.stButton>button:hover {
-    background: linear-gradient(135deg, #1d4ed8, #1e40af);
-}
-
-/* Badge */
-.badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: #e0f2fe;
-    color: #0369a1;
-    font-size: 12px;
-    margin-right: 6px;
-}
-
-/* Animation */
-.result-card {
-    animation: fadeInUp 0.5s ease;
-}
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -136,7 +84,6 @@ def get_probability_dict(probabilities, class_values):
         prob_dict.setdefault(label, 0.0)
     return prob_dict
 
-
 def productivity_note(label):
     if label == "High":
         return "Excellent productivity outlook based on the selected production conditions."
@@ -152,11 +99,6 @@ st.markdown("""
 <div class="hero-card">
 <h1>🧵 AI-Powered Garment Factory Productivity Predictor</h1>
 <p>Decision-support system using Decision Tree model</p>
-
-<span class="badge">Machine Learning</span>
-<span class="badge">Decision Support</span>
-<span class="badge">Real-time Prediction</span>
-
 </div>
 """, unsafe_allow_html=True)
 
@@ -165,86 +107,56 @@ c1.metric("Deployment", "Active")
 c2.metric("Model", "Decision Tree")
 c3.metric("Output", "3 Classes")
 
-st.info("System ready for real-time productivity prediction")
-
 
 # =========================================================
 # 🧾 INPUT SECTION
 # =========================================================
 form_is_invalid = False
 
-st.divider()
-
-# 🔴 IMPORTANT DETAILS
 st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("## 🔴 Important Production Factors")
-st.caption("Core variables that directly impact productivity prediction")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("👥 Workforce & Workload")
-
-    no_of_workers = st.number_input(
-        "Number of Workers", value=30,
-        help="Total workers assigned to the production line"
-    )
+    no_of_workers = st.number_input("Number of Workers", value=30)
     if not (2 <= no_of_workers <= 89):
         st.error("Workers must be between 2 and 89")
         form_is_invalid = True
 
-    wip = st.number_input(
-        "Work in Progress (WIP)", value=500,
-        help="Current unfinished items in production"
-    )
+    wip = st.number_input("WIP", value=500)
     if not (0 <= wip <= 2698):
         st.error("WIP out of range")
         form_is_invalid = True
 
 with col2:
-    st.subheader("⚙️ Production Complexity")
-
-    smv = st.number_input(
-        "SMV", value=22.0,
-        help="Standard Minute Value (task complexity)"
-    )
+    smv = st.number_input("SMV", value=22.0)
     if not (2.9 <= smv <= 54.6):
         st.error("SMV out of range")
         form_is_invalid = True
 
-    no_of_style_change = st.selectbox("Style Changes", [0, 1, 2])
+    no_of_style_change = st.selectbox("Style Changes", [0,1,2])
 
 st.markdown('</div>', unsafe_allow_html=True)
 
 
-# 🟡 SUPPORTING DETAILS
 st.markdown('<div class="section-card">', unsafe_allow_html=True)
-st.markdown("## 🟡 Supporting Operational Details")
-st.caption("Additional operational inputs to refine prediction accuracy")
+st.markdown("## 🟡 Supporting Details")
 
 col3, col4 = st.columns(2)
 
 with col3:
-    st.subheader("📅 Time & Department")
-
     day = st.selectbox("Day",
-        ["Monday", "Tuesday", "Wednesday", "Thursday", "Saturday", "Sunday"]
+        ["Monday","Tuesday","Wednesday","Thursday","Saturday","Sunday"]
     )
-
     quarter = st.selectbox("Quarter",
-        ["Quarter1", "Quarter2", "Quarter3", "Quarter4", "Quarter5"]
+        ["Quarter1","Quarter2","Quarter3","Quarter4","Quarter5"]
     )
-
-    department = st.selectbox("Department", ["sewing", "finished"])
+    department = st.selectbox("Department", ["sewing","finished"])
 
 with col4:
-    st.subheader("💰 Incentives & Efficiency")
-
     incentive = st.number_input("Incentive", value=100)
-    over_time = st.slider(
-        "Over Time (Minutes)", 0, 25920, 0,
-        help="Total overtime in minutes"
-    )
+    over_time = st.slider("Over Time", 0, 25920, 0)
     idle_time = st.number_input("Idle Time", value=0)
     idle_men = st.number_input("Idle Workers", value=0)
 
@@ -252,17 +164,9 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =========================================================
-# 🚀 PREDICTION BUTTON
+# 🚀 BUTTON
 # =========================================================
-st.divider()
-st.subheader("🚀 Generate Prediction")
-
-generate = st.button("Generate Productivity Forecast",
-                     use_container_width=True,
-                     disabled=form_is_invalid)
-
-if form_is_invalid:
-    st.warning("Please fix errors first.")
+generate = st.button("Generate Prediction", use_container_width=True)
 
 
 # =========================================================
@@ -295,46 +199,58 @@ if generate:
     prediction = model.predict(input_df)[0]
     probs = model.predict_proba(input_df)[0]
 
-    class_values = list(getattr(model, "classes_", [0, 1, 2]))
+    class_values = list(getattr(model, "classes_", [0,1,2]))
     prob_dict = get_probability_dict(probs, class_values)
 
     predicted_label = LABEL_MAP[prediction]
 
-    # 🎯 RESULT CARD
-    st.markdown('<div class="result-card">', unsafe_allow_html=True)
-
+    # 🎨 COLOR RESULT DISPLAY
     color_map = {
-        "High": "#16a34a",
-        "Moderate": "#f59e0b",
-        "Low": "#dc2626"
+        "High": {"bg":"#dcfce7","border":"#16a34a","text":"#14532d","icon":"🟢"},
+        "Moderate": {"bg":"#fef9c3","border":"#f59e0b","text":"#78350f","icon":"🟡"},
+        "Low": {"bg":"#fee2e2","border":"#dc2626","text":"#7f1d1d","icon":"🔴"}
     }
+
+    style = color_map[predicted_label]
 
     st.markdown(f"""
     <div style="
-        background: {color_map[predicted_label]};
-        color: white;
-        padding: 12px;
-        border-radius: 12px;
-        text-align: center;
-        font-weight: bold;
-        font-size: 18px;
+        background:{style['bg']};
+        border-left:8px solid {style['border']};
+        padding:18px;
+        border-radius:14px;
+        margin-bottom:10px;
     ">
-    Prediction: {predicted_label} Productivity
+    <h2 style='color:{style["text"]};'>
+    {style["icon"]} {predicted_label} Productivity
+    </h2>
+    <p style='color:{style["text"]};'>
+    {productivity_note(predicted_label)}
+    </p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.write(productivity_note(predicted_label))
-
-    st.markdown("### 📊 Prediction Confidence Breakdown")
+    # 📊 Probabilities
+    st.markdown("### 📊 Prediction Confidence")
 
     c1, c2, c3 = st.columns(3)
 
-    for col, label in zip([c1, c2, c3], DISPLAY_ORDER):
+    bar_color = {
+        "High":"#16a34a",
+        "Moderate":"#f59e0b",
+        "Low":"#dc2626"
+    }
+
+    for col, label in zip([c1,c2,c3], DISPLAY_ORDER):
         with col:
-            st.caption(f"{label} Confidence Level")
             st.metric(label, f"{prob_dict[label]:.2%}")
             st.progress(prob_dict[label])
+            st.markdown(
+                f"<div style='height:6px;background:{bar_color[label]};border-radius:6px;'></div>",
+                unsafe_allow_html=True
+            )
 
+    # Feedback
     if predicted_label == "High":
         st.success(f"Confidence: {prob_dict['High']:.2%}")
         st.balloons()
@@ -343,24 +259,5 @@ if generate:
     else:
         st.error(f"Confidence: {prob_dict['Low']:.2%}")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    with st.expander("📋 View Processed Input Data"):
+    with st.expander("View Input Data"):
         st.dataframe(input_df)
-
-    with st.expander("ℹ️ Interpretation Note"):
-        st.write(
-            "Decision Tree may give identical probabilities for similar patterns (same leaf node)."
-        )
-
-
-# =========================================================
-# 📌 FOOTER
-# =========================================================
-st.markdown("""
-<hr>
-<div style='text-align:center; color:gray; font-size:13px;'>
-🧵 <b>Garment Productivity AI System</b><br>
-Built with Streamlit | Decision Tree Model | Final Year Project
-</div>
-""", unsafe_allow_html=True)
