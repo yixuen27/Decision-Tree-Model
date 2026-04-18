@@ -18,14 +18,13 @@ st.set_page_config(
 
 
 # =========================================================
-# 🎨 UI STYLING
+# 🎨 PROFESSIONAL UI STYLING
 # =========================================================
 st.markdown("""
 <style>
-.stApp {
-    background: linear-gradient(120deg, #f1f5f9, #e2e8f0);
-}
 .block-container {
+    padding-top: 1.2rem;
+    padding-bottom: 2rem;
     max-width: 1200px;
 }
 .hero-card {
@@ -36,17 +35,17 @@ st.markdown("""
     margin-bottom: 1rem;
 }
 .section-card {
-    background: white;
-    border-radius: 16px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
-}
-.result-card {
+    background: rgba(255,255,255,0.9);
     border-radius: 18px;
     padding: 1.2rem;
-    background: #ffffff;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    margin-bottom: 1rem;
+}
+.result-card {
+    border-radius: 20px;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #ffffff, #f1f5f9);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 .stButton>button {
     border-radius: 12px;
@@ -113,6 +112,8 @@ c3.metric("Output", "3 Classes")
 # =========================================================
 form_is_invalid = False
 
+st.divider()
+
 st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("## 🔴 Important Production Factors")
 
@@ -124,7 +125,7 @@ with col1:
         st.error("Workers must be between 2 and 89")
         form_is_invalid = True
 
-    wip = st.number_input("WIP", value=500)
+    wip = st.number_input("Work in Progress (WIP)", value=500)
     if not (0 <= wip <= 2698):
         st.error("WIP out of range")
         form_is_invalid = True
@@ -135,13 +136,13 @@ with col2:
         st.error("SMV out of range")
         form_is_invalid = True
 
-    no_of_style_change = st.selectbox("Style Changes", [0,1,2])
+    no_of_style_change = st.selectbox("Style Changes", [0, 1, 2])
 
 st.markdown('</div>', unsafe_allow_html=True)
 
 
 st.markdown('<div class="section-card">', unsafe_allow_html=True)
-st.markdown("## 🟡 Supporting Details")
+st.markdown("## 🟡 Supporting Operational Details")
 
 col3, col4 = st.columns(2)
 
@@ -156,7 +157,7 @@ with col3:
 
 with col4:
     incentive = st.number_input("Incentive", value=100)
-    over_time = st.slider("Over Time", 0, 25920, 0)
+    over_time = st.slider("Over Time (Minutes)", 0, 25920, 0)
     idle_time = st.number_input("Idle Time", value=0)
     idle_men = st.number_input("Idle Workers", value=0)
 
@@ -166,7 +167,12 @@ st.markdown('</div>', unsafe_allow_html=True)
 # =========================================================
 # 🚀 BUTTON
 # =========================================================
-generate = st.button("Generate Prediction", use_container_width=True)
+generate = st.button("Generate Productivity Forecast",
+                     use_container_width=True,
+                     disabled=form_is_invalid)
+
+if form_is_invalid:
+    st.warning("Please fix errors first.")
 
 
 # =========================================================
@@ -199,7 +205,7 @@ if generate:
     prediction = model.predict(input_df)[0]
     probs = model.predict_proba(input_df)[0]
 
-    class_values = list(getattr(model, "classes_", [0,1,2]))
+    class_values = list(getattr(model, "classes_", [0, 1, 2]))
     prob_dict = get_probability_dict(probs, class_values)
 
     predicted_label = LABEL_MAP[prediction]
@@ -213,24 +219,25 @@ if generate:
 
     style = color_map[predicted_label]
 
+    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+
     st.markdown(f"""
     <div style="
         background:{style['bg']};
         border-left:8px solid {style['border']};
         padding:18px;
         border-radius:14px;
-        margin-bottom:10px;
+        margin-bottom:15px;
     ">
-    <h2 style='color:{style["text"]};'>
+    <h2 style='color:{style["text"]}; text-align:center;'>
     {style["icon"]} {predicted_label} Productivity
     </h2>
-    <p style='color:{style["text"]};'>
+    <p style='color:{style["text"]}; text-align:center;'>
     {productivity_note(predicted_label)}
     </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # 📊 Probabilities
     st.markdown("### 📊 Prediction Confidence")
 
     c1, c2, c3 = st.columns(3)
@@ -243,6 +250,7 @@ if generate:
 
     for col, label in zip([c1,c2,c3], DISPLAY_ORDER):
         with col:
+            st.caption(f"{label} Confidence Level")
             st.metric(label, f"{prob_dict[label]:.2%}")
             st.progress(prob_dict[label])
             st.markdown(
@@ -250,7 +258,6 @@ if generate:
                 unsafe_allow_html=True
             )
 
-    # Feedback
     if predicted_label == "High":
         st.success(f"Confidence: {prob_dict['High']:.2%}")
         st.balloons()
@@ -259,5 +266,21 @@ if generate:
     else:
         st.error(f"Confidence: {prob_dict['Low']:.2%}")
 
-    with st.expander("View Input Data"):
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    with st.expander("📋 View Processed Input Data"):
         st.dataframe(input_df)
+
+    with st.expander("ℹ️ Interpretation Note"):
+        st.write("Decision Tree may give identical probabilities for similar patterns (same leaf node).")
+
+
+# =========================================================
+# 📌 FOOTER
+# =========================================================
+st.markdown("""
+<hr>
+<p style='text-align:center; font-size:13px; color:gray;'>
+Built with Streamlit | AI Decision Support System for Garment Industry
+</p>
+""", unsafe_allow_html=True)
