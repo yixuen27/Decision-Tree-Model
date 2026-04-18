@@ -23,6 +23,11 @@ st.set_page_config(
 st.markdown("""
 <style>
 
+/* Background */
+.stApp {
+    background: linear-gradient(120deg, #f1f5f9, #e2e8f0);
+}
+
 /* Global */
 .block-container {
     padding-top: 1.2rem;
@@ -87,6 +92,21 @@ st.markdown("""
     margin-right: 6px;
 }
 
+/* Animation */
+.result-card {
+    animation: fadeInUp 0.5s ease;
+}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -145,6 +165,8 @@ c1.metric("Deployment", "Active")
 c2.metric("Model", "Decision Tree")
 c3.metric("Output", "3 Classes")
 
+st.info("System ready for real-time productivity prediction")
+
 
 # =========================================================
 # 🧾 INPUT SECTION
@@ -156,18 +178,25 @@ st.divider()
 # 🔴 IMPORTANT DETAILS
 st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("## 🔴 Important Production Factors")
+st.caption("Core variables that directly impact productivity prediction")
 
 col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("👥 Workforce & Workload")
 
-    no_of_workers = st.number_input("Number of Workers", value=30)
+    no_of_workers = st.number_input(
+        "Number of Workers", value=30,
+        help="Total workers assigned to the production line"
+    )
     if not (2 <= no_of_workers <= 89):
         st.error("Workers must be between 2 and 89")
         form_is_invalid = True
 
-    wip = st.number_input("Work in Progress (WIP)", value=500)
+    wip = st.number_input(
+        "Work in Progress (WIP)", value=500,
+        help="Current unfinished items in production"
+    )
     if not (0 <= wip <= 2698):
         st.error("WIP out of range")
         form_is_invalid = True
@@ -175,7 +204,10 @@ with col1:
 with col2:
     st.subheader("⚙️ Production Complexity")
 
-    smv = st.number_input("SMV", value=22.0)
+    smv = st.number_input(
+        "SMV", value=22.0,
+        help="Standard Minute Value (task complexity)"
+    )
     if not (2.9 <= smv <= 54.6):
         st.error("SMV out of range")
         form_is_invalid = True
@@ -188,6 +220,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 # 🟡 SUPPORTING DETAILS
 st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.markdown("## 🟡 Supporting Operational Details")
+st.caption("Additional operational inputs to refine prediction accuracy")
 
 col3, col4 = st.columns(2)
 
@@ -208,7 +241,10 @@ with col4:
     st.subheader("💰 Incentives & Efficiency")
 
     incentive = st.number_input("Incentive", value=100)
-    over_time = st.slider("Over Time (Minutes)", 0, 25920, 0)
+    over_time = st.slider(
+        "Over Time (Minutes)", 0, 25920, 0,
+        help="Total overtime in minutes"
+    )
     idle_time = st.number_input("Idle Time", value=0)
     idle_men = st.number_input("Idle Workers", value=0)
 
@@ -264,12 +300,32 @@ if generate:
 
     predicted_label = LABEL_MAP[prediction]
 
+    # 🎯 RESULT CARD
     st.markdown('<div class="result-card">', unsafe_allow_html=True)
 
-    st.markdown(f"<h2 style='text-align:center;'>🎯 {predicted_label} Productivity</h2>",
-                unsafe_allow_html=True)
+    color_map = {
+        "High": "#16a34a",
+        "Moderate": "#f59e0b",
+        "Low": "#dc2626"
+    }
+
+    st.markdown(f"""
+    <div style="
+        background: {color_map[predicted_label]};
+        color: white;
+        padding: 12px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 18px;
+    ">
+    Prediction: {predicted_label} Productivity
+    </div>
+    """, unsafe_allow_html=True)
 
     st.write(productivity_note(predicted_label))
+
+    st.markdown("### 📊 Prediction Confidence Breakdown")
 
     c1, c2, c3 = st.columns(3)
 
@@ -303,7 +359,8 @@ if generate:
 # =========================================================
 st.markdown("""
 <hr>
-<p style='text-align:center; font-size:13px; color:gray;'>
-Built with Streamlit | AI Decision Support System for Garment Industry
-</p>
+<div style='text-align:center; color:gray; font-size:13px;'>
+🧵 <b>Garment Productivity AI System</b><br>
+Built with Streamlit | Decision Tree Model | Final Year Project
+</div>
 """, unsafe_allow_html=True)
