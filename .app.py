@@ -339,10 +339,6 @@ if generate:
     with st.expander("📋 View Processed Input Data"):
         st.dataframe(input_df)
 
-    with st.expander("ℹ️ Interpretation Note"):
-        st.write(
-            "Decision Tree may give identical probabilities for similar patterns (same leaf node)."
-        )
 
 
 # =========================================================
