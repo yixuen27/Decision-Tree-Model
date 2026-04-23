@@ -130,7 +130,7 @@ def productivity_note(label):
 # =========================================================
 st.markdown("""
 <div class="hero-card">
-<h1>🧵 AI-Powered Garment Factory Productivity Predictor</h1>
+<h1>🧵Garment Factory Productivity Predictor</h1>
 <p>Decision-support system using Decision Tree model</p>
 
 <span class="badge">Machine Learning</span>
