@@ -168,7 +168,7 @@ with col1:
 
     wip = st.number_input("Work in Progress (WIP)", value=500)
     if not (0 <= wip <= 23122):
-        st.error("WIP's value must be between 7 and 23122, ")
+        st.error("WIP's value must be between 7 and 23122")
         form_is_invalid = True
 
 with col2:
