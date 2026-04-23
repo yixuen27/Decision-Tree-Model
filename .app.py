@@ -206,7 +206,7 @@ with col4:
     st.subheader("💰 Incentives & Efficiency")
 
     incentive = st.number_input("Incentive", value=100)
-    over_time = st.slider("Over Time (Minutes)", 0, 25920, 0)
+    over_time = st.number_input("Over Time (Minutes)",value=0)
     idle_time = st.number_input("Idle Time", value=0)
     idle_men = st.number_input("Idle Workers", value=0)
 
