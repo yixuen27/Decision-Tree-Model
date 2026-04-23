@@ -167,16 +167,16 @@ with col1:
         form_is_invalid = True
 
     wip = st.number_input("Work in Progress (WIP)", value=500)
-    if not (0 <= wip <= 2698):
-        st.error("WIP out of range")
+    if not (0 <= wip <= 23122):
+        st.error("WIP value must be between 7 to 23122, ")
         form_is_invalid = True
 
 with col2:
     st.subheader("⚙️ Production Complexity")
 
     smv = st.number_input("SMV", value=22.0)
-    if not (2.9 <= smv <= 54.6):
-        st.error("SMV out of range")
+    if not (2.9 <= smv <= 54.56):
+        st.error("SMV value must be between 2.9 to 54.56")
         form_is_invalid = True
 
     no_of_style_change = st.selectbox("Style Changes", [0, 1, 2])
