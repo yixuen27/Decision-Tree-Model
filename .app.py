@@ -216,12 +216,12 @@ with col4:
         form_is_invalid = True
         
     idle_time = st.number_input("Idle Time", value=0)
-    if not (2 <= idle_time <= 300):
+    if not (0 <= idle_time <= 300):
         st.error("Idle_time must be between 0 and 300")
         form_is_invalid = True
             
     idle_men = st.number_input("Idle Workers", value=0)
-    if not (2 <= idle_men <= 45):
+    if not (0 <= idle_men <= 45):
         st.error("Idle_men must be between 0 and 45")
         form_is_invalid = True
 
