@@ -168,7 +168,7 @@ with col1:
 
     wip = st.number_input("Work in Progress (WIP)", value=500)
     if not (0 <= wip <= 23122):
-        st.error("WIP value must be between 7 to 23122, ")
+        st.error("WIP's value must be between 7 and 23122, ")
         form_is_invalid = True
 
 with col2:
@@ -176,7 +176,7 @@ with col2:
 
     smv = st.number_input("SMV", value=22.0)
     if not (2.9 <= smv <= 54.56):
-        st.error("SMV value must be between 2.9 to 54.56")
+        st.error("SMV's value must be between 2.9 and 54.56")
         form_is_invalid = True
 
     no_of_style_change = st.selectbox("Style Changes", [0, 1, 2])
@@ -206,9 +206,24 @@ with col4:
     st.subheader("💰 Incentives & Efficiency")
 
     incentive = st.number_input("Incentive", value=100)
+    if not (0 <= incentive <= 3600):
+        st.error("Incentive must be between 0 and 3600")
+        form_is_invalid = True
+            
     over_time = st.number_input("Over Time (Minutes)",value=0)
+    if not (0 <= over_time <= 25920):
+        st.error("Over Time's value must be between 0 and 25920 minutes")
+        form_is_invalid = True
+        
     idle_time = st.number_input("Idle Time", value=0)
+    if not (2 <= idle_time <= 300):
+        st.error("Idle_time must be between 0 and 300")
+        form_is_invalid = True
+            
     idle_men = st.number_input("Idle Workers", value=0)
+    if not (2 <= idle_men <= 45):
+        st.error("Idle_men must be between 0 and 45")
+        form_is_invalid = True
 
 st.markdown('</div>', unsafe_allow_html=True)
 
